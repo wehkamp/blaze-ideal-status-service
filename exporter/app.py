@@ -16,24 +16,6 @@ SERVICE_PORT = os.environ.get('SERVICE_PORT', 5000)
 
 logging.basicConfig(level=logging.os.environ.get('LOG_LEVEL', 'INFO'))
 app = Flask(__name__)
-app_metrics = {
-    'success_rate': GaugeMetricFamily(
-        'ideal_issuer_successes_total',
-        'Success rate for iDeal issuer',
-        labels = [
-            'bank_name',
-            'bank_code'
-            ]
-        ),
-    'error_rate': GaugeMetricFamily(
-        'ideal_issuer_errors_total',
-        'Error rate for iDeal issuer',
-        labels = [
-            'bank_name',
-            'bank_code'
-            ]
-        )
-    }
 
 
 class RegistryMock(object):
@@ -46,7 +28,25 @@ class RegistryMock(object):
 
 
 def update_latest():
-    global app_metrics, latest_metrics
+    global latest_metrics
+    app_metrics = {
+        'success_rate': GaugeMetricFamily(
+            'ideal_issuer_successes_total',
+            'Success rate for iDeal issuer',
+            labels = [
+                'bank_name',
+                'bank_code'
+                ]
+            ),
+        'error_rate': GaugeMetricFamily(
+            'ideal_issuer_errors_total',
+            'Error rate for iDeal issuer',
+            labels = [
+                'bank_name',
+                'bank_code'
+                ]
+            )
+        }
     r = requests.get(IDEAL_JSON_URL)
     body = json.loads(r.content.decode('UTF-8'))
     for bank in body['rows']:
