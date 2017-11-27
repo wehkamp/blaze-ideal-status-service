@@ -62,8 +62,6 @@ def update_latest():
                 rate_success = float(d['v'])*100
             elif d['p']['className'] == 'issuers_current_rate_error':
                 rate_error = float(d['v'])*100
-        print("%s (%s): OK:%s ER:%s" % (
-            bank_code, bank_name, rate_success, rate_error))
         app_metrics['success_rate'].add_metric(
                 [bank_name, bank_code], rate_success)
         app_metrics['error_rate'].add_metric(
