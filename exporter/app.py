@@ -11,7 +11,8 @@ from flask import abort
 from prometheus_client.exposition import generate_latest
 from prometheus_client.core import GaugeMetricFamily
 
-IDEAL_JSON_URL = 'https://www.ideal-status.nl/static/sepa_issuers_current_lite.json'
+IDEAL_JSON_URL = ('https://www.ideal-status.nl' +
+                  '/static/sepa_issuers_current_lite.json')
 SERVICE_PORT = os.environ.get('SERVICE_PORT', 5000)
 
 logging.basicConfig(level=logging.os.environ.get('LOG_LEVEL', 'INFO'))
@@ -33,7 +34,7 @@ def update_latest():
         'success_rate': GaugeMetricFamily(
             'ideal_issuer_successes_total',
             'Success rate for iDeal issuer',
-            labels = [
+            labels=[
                 'bank_name',
                 'bank_code'
                 ]
@@ -41,7 +42,7 @@ def update_latest():
         'error_rate': GaugeMetricFamily(
             'ideal_issuer_errors_total',
             'Error rate for iDeal issuer',
-            labels = [
+            labels=[
                 'bank_name',
                 'bank_code'
                 ]
@@ -61,12 +62,14 @@ def update_latest():
                 rate_success = float(d['v'])*100
             elif d['p']['className'] == 'issuers_current_rate_error':
                 rate_error = float(d['v'])*100
-        print("%s (%s): OK:%s ER:%s" % (bank_code, bank_name, rate_success, rate_error))
-        app_metrics['success_rate'].add_metric([bank_name, bank_code], rate_success)
-        app_metrics['error_rate'].add_metric([bank_name, bank_code], rate_error)
+        print("%s (%s): OK:%s ER:%s" % (
+            bank_code, bank_name, rate_success, rate_error))
+        app_metrics['success_rate'].add_metric(
+                [bank_name, bank_code], rate_success)
+        app_metrics['error_rate'].add_metric(
+                [bank_name, bank_code], rate_error)
 
     latest_metrics = generate_latest(RegistryMock(app_metrics.values()))
-
 
 
 @app.route("/")
