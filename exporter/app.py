@@ -6,7 +6,7 @@ import logging
 import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask
+from flask import Flask, Response
 from flask import abort
 from prometheus_client.exposition import generate_latest
 from prometheus_client.core import GaugeMetricFamily
@@ -82,7 +82,7 @@ def status():
 
 @app.route("/metrics")
 def metrics():
-    return latest_metrics
+    return Response(latest_metrics, mimetype='text/plain')
 
 
 def run():
