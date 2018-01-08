@@ -25,6 +25,7 @@ LABEL blaze.service.id="prometheus-ideal-exporter" \
       blaze.service.deployment.memory="50" \
       blaze.service.deployment.minimum-instances="1" \
       blaze.service.deployment.internal-port="5000" \
+      blaze.service.deployment.promotion.accept.manual-step="false" \
       blaze.service.deployment.promotion.prod.manual-step="false" \
       blaze.service.routing.consumer.exposed="false" \
       blaze.service.routing.trusted.exposed="false"  
