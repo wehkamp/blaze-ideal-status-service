@@ -14,9 +14,15 @@ from prometheus_client.core import GaugeMetricFamily
 IDEAL_JSON_URL = ('https://www.ideal-status.nl' +
                   '/static/sepa_issuers_current_lite.json')
 SERVICE_PORT = os.environ.get('SERVICE_PORT', 5000)
+VERIFY_SSL = bool(os.environ.get('VERIFY_SSL', False))
 
 logging.basicConfig(level=logging.os.environ.get('LOG_LEVEL', 'INFO'))
 app = Flask(__name__)
+
+if not VERIFY_SSL:
+    logging.warn("Running with disabled SSL certificate validation.")
+    import urllib3
+    urllib3.disable_warnings()
 
 
 class RegistryMock(object):
@@ -48,7 +54,7 @@ def update_latest():
                 ]
             )
         }
-    r = requests.get(IDEAL_JSON_URL)
+    r = requests.get(IDEAL_JSON_URL, verify=VERIFY_SSL)
     body = json.loads(r.content.decode('UTF-8'))
     for bank in body['rows']:
         bank_name, bank_code, rate_success, rate_error = None, None, None, None
