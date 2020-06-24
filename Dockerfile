@@ -13,11 +13,11 @@ RUN LAYER=build \
 
 ADD ./exporter /exporter
 
-LABEL blaze.service.id="prometheus-ideal-exporter" \
-      blaze.service.name="blaze-prometheus-ideal-exporter" \
+LABEL blaze.service.id="blaze-ideal-status-service" \
+      blaze.service.name="ideal-status" \
       blaze.service.version="${tag}" \
       blaze.service.team="Tooling" \
-      blaze.service.description="Monitoring for ideal platform status" \
+      blaze.service.description="Monitoring for iDeal platform status" \
       blaze.service.features.health-check.enabled="true" \
       blaze.service.features.health-check.endpoint="/status" \
       blaze.service.features.metrics.enabled="true" \
