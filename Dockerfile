@@ -1,13 +1,13 @@
-FROM wehkamp/alpine:3.5
+FROM wehkamp/alpine:3.9
 
 ARG tag
-ENTRYPOINT ["python", "-m", "exporter"]
+ENTRYPOINT ["python3", "-m", "exporter"]
 EXPOSE 5000
 ENV FLASK_APP=/exporter/exporter/app.py
 
 RUN LAYER=build \
-  && apk add -U python py-pip \
-  && pip install prometheus_client requests apscheduler Flask \
+  && apk add -U python3 py3-pip \
+  && pip3 install prometheus_client requests apscheduler Flask \
   && rm -rf /var/cache/apk/* \
   && rm -rf ~/.cache/pip
 
@@ -17,7 +17,7 @@ LABEL blaze.service.id="prometheus-ideal-exporter" \
       blaze.service.name="blaze-prometheus-ideal-exporter" \
       blaze.service.version="${tag}" \
       blaze.service.team="Tooling" \
-      blaze.service.description="Monitoring for ideal-status.nl" \
+      blaze.service.description="Monitoring for ideal platform status" \
       blaze.service.features.health-check.enabled="true" \
       blaze.service.features.health-check.endpoint="/status" \
       blaze.service.features.metrics.enabled="true" \

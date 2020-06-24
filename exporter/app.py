@@ -1,28 +1,38 @@
-from __future__ import print_function
-
 import requests
-import json
-import logging
 import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, Response
 from flask import abort
+from logging.config import dictConfig, logging
 from prometheus_client.exposition import generate_latest
 from prometheus_client.core import GaugeMetricFamily
 
-IDEAL_JSON_URL = ('https://www.ideal-status.nl' +
-                  '/static/sepa_issuers_current_lite.json')
+
 SERVICE_PORT = os.environ.get('SERVICE_PORT', 5000)
-VERIFY_SSL = bool(os.environ.get('VERIFY_SSL', False))
 
-logging.basicConfig(level=logging.os.environ.get('LOG_LEVEL', 'INFO'))
+dictConfig({
+        'version': 1,
+        'formatters': {
+            'default': {
+                'format': '[%(levelname)s] %(module)s: %(message)s',
+            }
+        },
+        'handlers': {
+            'wsgi': {
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout',
+                'formatter': 'default'
+            }
+        },
+        'root': {
+            'level': os.environ.get('LOG_LEVEL', 'INFO'),
+            'handlers': ['wsgi']
+        }
+    })
+logging.info('Logging environment ready')
+logging.debug('Operating with level DEBUG enabled')
 app = Flask(__name__)
-
-if not VERIFY_SSL:
-    logging.warn("Running with disabled SSL certificate validation.")
-    import urllib3
-    urllib3.disable_warnings()
 
 
 class RegistryMock(object):
@@ -36,44 +46,35 @@ class RegistryMock(object):
 
 def update_latest():
     global latest_metrics
-    app_metrics = {
-        'success_rate': GaugeMetricFamily(
-            'ideal_issuer_successes_total',
-            'Success rate for iDeal issuer',
-            labels=[
-                'bank_name',
-                'bank_code'
-                ]
-            ),
-        'error_rate': GaugeMetricFamily(
-            'ideal_issuer_errors_total',
-            'Error rate for iDeal issuer',
-            labels=[
-                'bank_name',
-                'bank_code'
-                ]
-            )
-        }
-    r = requests.get(IDEAL_JSON_URL, verify=VERIFY_SSL)
-    body = json.loads(r.content.decode('UTF-8'))
-    for bank in body['rows']:
-        bank_name, bank_code, rate_success, rate_error = None, None, None, None
-        for data in bank['c']:
-            d = data
-            if d['p']['className'] == 'issuers_current_bank_name':
-                bank_name = d['v']
-            elif d['p']['className'] == 'issuers_current_bank_code':
-                bank_code = d['v']
-            elif d['p']['className'] == 'issuers_current_rate_success':
-                rate_success = float(d['v'])*100
-            elif d['p']['className'] == 'issuers_current_rate_error':
-                rate_error = float(d['v'])*100
-        app_metrics['success_rate'].add_metric(
-                [bank_name, bank_code], rate_success)
-        app_metrics['error_rate'].add_metric(
-                [bank_name, bank_code], rate_error)
+    metrics = {
+        'ideal_issuer_availability': GaugeMetricFamily(
+            'ideal_issuer_availability',
+            'Availability of iDeal issuer, in percentage',
+            labels=['bank_name']
+        ),
+        'ideal_acquirer_availability': GaugeMetricFamily(
+            'ideal_acquirer_availability',
+            'Availability of iDeal acquirer, in percentage',
+            labels=['bank_name']
+        ),
+    }
 
-    latest_metrics = generate_latest(RegistryMock(app_metrics.values()))
+    urls = [('ideal_acquirer_', 'https://beschikbaarheid.ideal.nl/api/api/GetAcquirers', 'Acquirers'),
+            ('ideal_issuer_', 'https://beschikbaarheid.ideal.nl/api/api/GetIssuers', 'Issuers')]
+
+    for m in urls:
+        name = "{prefix}availability".format(prefix=m[0])
+        url = m[1]
+        search = m[2]
+        r = requests.get(url).json()
+        msg = r['Message']
+        if msg:
+            logging.info(msg)
+
+        issuers = r[search]
+        _ = list(map(lambda x: metrics[name].add_metric([x['BankName']], x['Percent'].replace(',', '.')), issuers))
+
+    latest_metrics = generate_latest(RegistryMock(metrics.values()))
 
 
 @app.route("/")
