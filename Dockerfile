@@ -17,6 +17,7 @@ LABEL blaze.service.id="blaze-ideal-status-service" \
       blaze.service.name="ideal-status" \
       blaze.service.version="${tag}" \
       blaze.service.team="Tooling" \
+      blaze.service.main-language="python" \
       blaze.service.description="Monitoring for iDeal platform status" \
       blaze.service.features.health-check.enabled="true" \
       blaze.service.features.health-check.endpoint="/status" \
