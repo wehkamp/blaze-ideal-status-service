@@ -1,4 +1,4 @@
-FROM wehkamp/alpine:3.9
+FROM 234348545939.dkr.ecr.eu-west-1.amazonaws.com/wehkamp/alpine:3.9
 
 ARG tag
 ENTRYPOINT ["python3", "-m", "exporter"]
